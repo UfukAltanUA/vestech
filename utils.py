@@ -2,6 +2,7 @@ from warnings import filterwarnings
 filterwarnings('ignore')
 import pandas as pd
 from ta.momentum import StochRSIIndicator
+from ta.volatility import BollingerBands
 
 def heikin_ashi(df):
     heikin_ashi_df = pd.DataFrame(index=df.index.values, columns=['open', 'high', 'low', 'close'])
@@ -40,25 +41,52 @@ def stockhastic_rsi_signal(stock):
     
     return signal
 
-def bollinger_bands(stock):
-
-    stock['TP'] = (stock['high'] + stock['low'] + stock['close']) / 3
-    stock['STD'] = stock['TP'].rolling(20).std(ddof = 0)
-    stock['MA-TP'] = stock['TP'].rolling(20).mean()
-
-    stock['BOLU'] = stock['MA-TP'] + 2 * stock['STD']
-    stock['BOLD'] = stock['MA-TP'] - 2 * stock['STD']
-    stock.drop(['TP', 'MA-TP'], axis = 1, inplace = True)
+def bollinger_band_low(stock):
     
-    return "Bollinger Bands Calculated"
+    bb = BollingerBands(stock['close'], 20, 2)
+    stock['BOLD'] = bb.bollinger_lband()
 
 def bollinger_bands_signal(stock):
     
     signal = []
     for i in range(0, len(stock)):
-        if stock['BOLD'][i] > stock['low'][i]:
+        if stock['BOLD'][i]  * 1.01 > stock['low'][i]:
         #if stock['BOLD'][i] / stock['Low'][i] > .96 or stock['BOLD'][i] / stock['Low'][i] < 1.04:
             signal.append(True)
         else:
             signal.append('Unknown')
     stock['BBL'] = signal
+
+def tema(stock, span = 13):
+    
+    ema1 = stock['close'].ewm(span = span ,adjust = False).mean()
+    ema2 = ema1.ewm(span = span ,adjust = False).mean()
+    ema3 = ema2.ewm(span = span ,adjust = False).mean()
+    
+    stock[f'TEMA{span}'] = (3*ema1)-(3*ema2) + ema3
+    
+def tema_signal(stock, spans = [13, 21]):
+    
+    signal = []
+    
+    for i in range(0, len(stock)):
+        if stock[f'TEMA{spans[0]}'][i] > stock[f'TEMA{spans[1]}'][i] and stock[f'TEMA{spans[0]}'][i-1] <= stock[f'TEMA{spans[1]}'][i-1]:
+            signal.append(True)
+        else:
+            signal.append('Unknown')
+
+    stock.drop([f'TEMA{spans[0]}', f'TEMA{spans[1]}'], axis = 1, inplace = True)
+    
+    return signal
+    
+def bearish_engulfing(stock):
+    
+    signal = []
+    
+    if stock['close'][-1] * 1.03 <= stock['open'][-1]:
+        signal.append(False)
+    else:
+        signal.append('Unknown')
+         
+    return signal
+    

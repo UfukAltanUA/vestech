@@ -10,7 +10,7 @@ import time
 s = time.time()
 
 end = datetime.today() #- timedelta(days = 5)
-start = end - timedelta(days = 36)
+start = end - timedelta(days = 45)
 
 df = get_data_yahoo(tickers, start, end)
 
@@ -23,7 +23,7 @@ cols = {'close':close, 'high': high, 'low': low, 'open': _open}
 
 results = service.process_stocks(tickers, cols)
 
-data = pd.DataFrame(results, columns = ['Tickers', 'Price', 'HA', 'BB', 'SRSI']) 
+data = pd.DataFrame(results, columns = ['Tickers', 'Price', 'HA', 'BB', 'SRSI', 'TEMA', 'BES']) 
 data = data.sort_values('Tickers', ascending = True)
 
 service.write_into_excel(data)

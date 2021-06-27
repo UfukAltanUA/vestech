@@ -25,9 +25,6 @@ tickers = ['AEFES.IS', 'AKBNK.IS', 'AKSA.IS' , 'AKGRT.IS', 'ARCLK.IS', 'ASELS.IS
            'TATGD.IS', 'TAVHL.IS', 'TKFEN.IS', 'TMSN.IS' , 'TOASO.IS', 'TRCAS.IS', 'TRGYO.IS',
            'TRKCM.IS', 'TSKB.IS' , 'TTKOM.IS', 'TTRAK.IS', 'TUPRS.IS', 'ULKER.IS', 'YATAS.IS']
 
-date = str(datetime.today())[:10]
-file = f"./reports/Report {date}.xlsx"
-
 def process_stocks(tickers,cols):
     
     results = []
@@ -41,13 +38,25 @@ def process_stocks(tickers,cols):
         dataset['low'] = cols['low'][ticker]
         dataset['open'] = cols['open'][ticker]
         
-        utils.bollinger_bands(dataset)
+        utils.bollinger_band_low(dataset)
         utils.bollinger_bands_signal(dataset)
+
+        if ticker == 'EREGL.IS':
+          print('BOLD')
+          print(dataset['BOLD'][-1])
+          print(dataset['BOLD'][-1]  * 1.01 )
+          print(dataset['low'][-1])
         
         dataset['%D'], dataset['%K'] = utils.stochastic_rsi(dataset['close'])
         dataset['SRSI'] = utils.stockhastic_rsi_signal(dataset)
         
+        utils.tema(dataset)
+        utils.tema(dataset, span = 21)
+        dataset['TEMASignal'] = utils.tema_signal(dataset)
+        
         dataset_ha = utils.heikin_ashi(dataset)
+        
+        bearish_engulfing_signal = utils.bearish_engulfing(dataset)
         
         ha_close = dataset_ha['close'].iloc[-1]
         ha_open = dataset_ha['open'].iloc[-1]
@@ -63,18 +72,18 @@ def process_stocks(tickers,cols):
         else:
             ha_signal = 'Unknown'
             
-        ticker = ticker[:-3]
         srsi_signal = dataset['SRSI'].iloc[-1]
         bb_signal = dataset['BBL'].iloc[-1]
         price = dataset['close'].iloc[-1]
+        tema_sgnl = dataset['TEMASignal'].iloc[-1]
         
-        results.append([ticker, price, ha_signal, bb_signal, srsi_signal])
+        results.append([ticker, price, ha_signal, bb_signal, srsi_signal, tema_sgnl, bearish_engulfing_signal])
             
     return results
 
 def write_into_excel(data):
 
-      writer = pd.ExcelWriter(file, engine = 'xlsxwriter')
+      writer = pd.ExcelWriter('report.xlsx', engine = 'xlsxwriter')
       data.to_excel(writer, sheet_name = 'VestechSolutions')
 
       workbook = writer.book
@@ -95,9 +104,15 @@ def write_into_excel(data):
       worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
       worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})      
 
+      # TEMA
+      worksheet.conditional_format('G2:G106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
+
+      # BES
+      worksheet.conditional_format('G2:G106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
+
       writer.close()    
 
-def send_document(filename = file, to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Bist Report'):
+def send_document(filename = 'report.xlsx', to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Bist Report'):
     email = MIMEMultipart()
     email['from'] = 'Ufuk Altan'
     email['to'] = to
