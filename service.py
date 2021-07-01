@@ -40,12 +40,6 @@ def process_stocks(tickers,cols):
         
         utils.bollinger_band_low(dataset)
         utils.bollinger_bands_signal(dataset)
-
-        if ticker == 'EREGL.IS':
-          print('BOLD')
-          print(dataset['BOLD'][-1])
-          print(dataset['BOLD'][-1]  * 1.01 )
-          print(dataset['low'][-1])
         
         dataset['%D'], dataset['%K'] = utils.stochastic_rsi(dataset['close'])
         dataset['SRSI'] = utils.stockhastic_rsi_signal(dataset)
@@ -55,8 +49,11 @@ def process_stocks(tickers,cols):
         dataset['TEMASignal'] = utils.tema_signal(dataset)
         
         dataset_ha = utils.heikin_ashi(dataset)
+
+        utils.average_directional_index(dataset)
+        utils.di_signal(dataset)
         
-        bearish_engulfing_signal = utils.bearish_engulfing(dataset)
+        bearish_engulfing_signal = str(utils.bearish_engulfing(dataset))
         
         ha_close = dataset_ha['close'].iloc[-1]
         ha_open = dataset_ha['open'].iloc[-1]
@@ -76,8 +73,10 @@ def process_stocks(tickers,cols):
         bb_signal = dataset['BBL'].iloc[-1]
         price = dataset['close'].iloc[-1]
         tema_sgnl = dataset['TEMASignal'].iloc[-1]
+        ticker = ticker[:-3]
+        di_sgnl = dataset['ADXSignal'][-1]
         
-        results.append([ticker, price, ha_signal, bb_signal, srsi_signal, tema_sgnl, bearish_engulfing_signal])
+        results.append([ticker, price, ha_signal, bb_signal, srsi_signal, tema_sgnl, di_sgnl, bearish_engulfing_signal])
             
     return results
 
@@ -107,8 +106,12 @@ def write_into_excel(data):
       # TEMA
       worksheet.conditional_format('G2:G106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
 
+      # DI
+      worksheet.conditional_format('H2:H106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
+      worksheet.conditional_format('H2:H106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
+
       # BES
-      worksheet.conditional_format('G2:G106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
+      worksheet.conditional_format('I2:I106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
 
       writer.close()    
 

@@ -23,7 +23,7 @@ cols = {'close':close, 'high': high, 'low': low, 'open': _open}
 
 results = service.process_stocks(tickers, cols)
 
-data = pd.DataFrame(results, columns = ['Tickers', 'Price', 'HA', 'BB', 'SRSI', 'TEMA', 'BES']) 
+data = pd.DataFrame(results, columns = ['Tickers', 'Price', 'HA', 'BB', 'SRSI', 'TEMA', 'DI', 'BES']) 
 data = data.sort_values('Tickers', ascending = True)
 
 service.write_into_excel(data)

@@ -3,6 +3,8 @@ filterwarnings('ignore')
 import pandas as pd
 from ta.momentum import StochRSIIndicator
 from ta.volatility import BollingerBands
+from ta.trend import ADXIndicator
+import numpy as np
 
 def heikin_ashi(df):
     heikin_ashi_df = pd.DataFrame(index=df.index.values, columns=['open', 'high', 'low', 'close'])
@@ -50,7 +52,7 @@ def bollinger_bands_signal(stock):
     
     signal = []
     for i in range(0, len(stock)):
-        if stock['BOLD'][i]  * 1.01 > stock['low'][i]:
+        if stock['BOLD'][i]  * 1.01 > stock['low'][i]  and stock['close'][i] > stock['open'][i]:
         #if stock['BOLD'][i] / stock['Low'][i] > .96 or stock['BOLD'][i] / stock['Low'][i] < 1.04:
             signal.append(True)
         else:
@@ -82,11 +84,46 @@ def tema_signal(stock, spans = [13, 21]):
 def bearish_engulfing(stock):
     
     signal = []
-    
-    if stock['close'][-1] * 1.03 <= stock['open'][-1]:
-        signal.append(False)
-    else:
-        signal.append('Unknown')
+
+    for i in range(0, len(stock)):
+
+        if stock['close'][i] * 1.03 <= stock['open'][i]:
+            signal.append(False) 
+        else:
+            signal.append('Unknown')
          
     return signal
     
+def average_directional_index(dataset):
+
+    high = pd.Series(np.reshape(dataset['high'].values, (dataset.shape[0],)))
+    low = pd.Series(np.reshape(dataset['low'].values, (dataset.shape[0],)))
+    close = pd.Series(np.reshape(dataset['close'].values, (dataset.shape[0],)))
+
+    adxI = ADXIndicator(high, low, close, 14, True)
+    pos = adxI.adx_pos()
+    neg = adxI.adx_neg()
+    #adx = adxI.adx()
+
+    dataset['-DI'] = list(neg)
+    dataset['+DI'] = list(pos)
+    #dataset['ADX'] = list(adx)
+
+def di_signal(stock, threshold = 2.6):
+
+    signal = []
+
+    for i in range(0, len(stock)):
+
+        if stock['-DI'][i] > stock['+DI'][i] and (stock['-DI'][i] / stock['+DI'][i]) > threshold:
+            
+            signal.append(True) 
+            
+        elif stock['+DI'][i] > stock['-DI'][i] and (stock['+DI'][i] / stock['-DI'][i]) > threshold:
+
+            signal.append(False) 
+
+        else:
+            signal.append('Unknown')
+
+    stock['ADXSignal'] = signal
