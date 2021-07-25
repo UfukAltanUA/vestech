@@ -8,6 +8,7 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+import yfinance as yf
 
 tickers = ['AEFES.IS', 'AKBNK.IS', 'AKSA.IS' , 'AKGRT.IS', 'ARCLK.IS', 'ASELS.IS', 'AYGAZ.IS',
            'BIZIM.IS', 'BRISA.IS', 'BANVT.IS', 'VESBE.IS', 'CCOLA.IS', 'CIMSA.IS', 'CLEBI.IS',
@@ -19,64 +20,52 @@ tickers = ['AEFES.IS', 'AKBNK.IS', 'AKSA.IS' , 'AKGRT.IS', 'ARCLK.IS', 'ASELS.IS
            'DEVA.IS' , 'EGEEN.IS', 'EREGL.IS', 'GSDHO.IS', 'ISGYO.IS', 'ISMEN.IS', 'KAREL.IS',
            'KARSN.IS', 'KARTN.IS', 'KCHOL.IS', 'KERVT.IS', 'BFREN.IS', 'GSRAY.IS', 'ARENA.IS',
            'ARMDA.IS', 'ARDYZ.IS', 'SEKFK.IS', 'AKSEN.IS', 'ALARK.IS', 'ALBRK.IS', 'ALKIM.IS',
-           'ALGYO.IS', 'ANACM.IS', 'ANHYT.IS', 'GUSGR.IS', 'KRDMD.IS', 'LOGO.IS' , 'MAVI.IS' ,
+           'ALGYO.IS', 'ANHYT.IS', 'KRDMD.IS', 'LOGO.IS' , 'MAVI.IS' ,
            'MGROS.IS', 'MPARK.IS', 'NETAS.IS', 'NTHOL.IS', 'ODAS.IS' , 'OTKAR.IS', 'PETKM.IS',
-           'PGSUS.IS', 'SAHOL.IS', 'SASA.IS' , 'SISE.IS' , 'SKBNK.IS', 'SODA.IS' , 'SOKM.IS' ,
+           'PGSUS.IS', 'SAHOL.IS', 'SASA.IS' , 'SISE.IS' , 'SKBNK.IS', 'SOKM.IS' ,
            'TATGD.IS', 'TAVHL.IS', 'TKFEN.IS', 'TMSN.IS' , 'TOASO.IS', 'TRCAS.IS', 'TRGYO.IS',
-           'TRKCM.IS', 'TSKB.IS' , 'TTKOM.IS', 'TTRAK.IS', 'TUPRS.IS', 'ULKER.IS', 'YATAS.IS']
+           'TSKB.IS' , 'TTKOM.IS', 'TTRAK.IS', 'TUPRS.IS', 'ULKER.IS', 'YATAS.IS']
 
-def process_stocks(tickers,cols):
+#'ANACM.IS', 'GUSGR.IS', 'SODA.IS' , 'TRKCM.IS',
+
+def process_stocks(tickers):
     
     results = []
     
     for ticker in tickers:
-        
+  
+        stock = yf.Ticker(ticker).history(period="1y")
+
         dataset = pd.DataFrame()
         
-        dataset['close'] = cols['close'][ticker]
-        dataset['high'] = cols['high'][ticker]
-        dataset['low'] = cols['low'][ticker]
-        dataset['open'] = cols['open'][ticker]
+        dataset['close'] = stock['Close']
+        dataset['high'] = stock['High']
+        dataset['low'] = stock['Low']
+        dataset['open'] = stock['Open']
         
         utils.bollinger_band_low(dataset)
         utils.bollinger_bands_signal(dataset)
         
         dataset['%D'], dataset['%K'] = utils.stochastic_rsi(dataset['close'])
         dataset['SRSI'] = utils.stockhastic_rsi_signal(dataset)
+
+        dataset['RSIValues'] = utils.relative_strength_index(dataset['close'])
+        dataset['RSI'] = utils.relative_strength_index_signal(dataset)
         
         utils.tema(dataset)
         utils.tema(dataset, span = 21)
         dataset['TEMASignal'] = utils.tema_signal(dataset)
-        
-        dataset_ha = utils.heikin_ashi(dataset)
-
-        utils.average_directional_index(dataset)
-        utils.di_signal(dataset)
-        
-        bearish_engulfing_signal = str(utils.bearish_engulfing(dataset))
-        
-        ha_close = dataset_ha['close'].iloc[-1]
-        ha_open = dataset_ha['open'].iloc[-1]
-        ha_close2 = dataset_ha['close'].iloc[-2]
-        ha_open2 = dataset_ha['open'].iloc[-2]
-        
-        if  ha_close > ha_open  and ha_close2 <= ha_open2:
-            ha_signal = True
             
-        elif ha_close < ha_open and ha_close2 >= ha_open2:            
-            ha_signal = False
-            
-        else:
-            ha_signal = 'Unknown'
-            
-        srsi_signal = dataset['SRSI'].iloc[-1]
-        bb_signal = dataset['BBL'].iloc[-1]
-        price = dataset['close'].iloc[-1]
-        tema_sgnl = dataset['TEMASignal'].iloc[-1]
         ticker = ticker[:-3]
-        di_sgnl = dataset['ADXSignal'][-1]
+        price = dataset['close'].iloc[-1]
+        bb_signal = dataset['BBL'].iloc[-1]
+        srsi_signal = dataset['SRSI'].iloc[-1]
+        rsi_signal = dataset['RSI'].iloc[-1]
+        tema_sgnl = dataset['TEMASignal'].iloc[-1]
         
-        results.append([ticker, price, ha_signal, bb_signal, srsi_signal, tema_sgnl, di_sgnl, bearish_engulfing_signal])
+        results.append([ticker, price, bb_signal, srsi_signal, rsi_signal, tema_sgnl])
+
+        print(ticker)
             
     return results
 
@@ -88,30 +77,28 @@ def write_into_excel(data):
       workbook = writer.book
       worksheet = writer.sheets['VestechSolutions']
 
-      green = workbook.add_format({'bg_color': '#b2e3a1', 'font_color': '#ffffff'}) 
       red = workbook.add_format({'bg_color': '#ba240d', 'font_color': '#ffffff'}) 
+      green = workbook.add_format({'bg_color': '#b2e3a1', 'font_color': '#ffffff'}) 
 
-      # HA
+      dark_green = workbook.add_format({'bg_color': '#007814', 'font_color': '#ffffff'}) 
+      blue = workbook.add_format({'bg_color': '#0e39e6', 'font_color': '#ffffff'}) 
+
+      # BB
       worksheet.conditional_format('D2:D106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
       worksheet.conditional_format('D2:D106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
 
-      # BB
+      # SRSI
       worksheet.conditional_format('E2:E106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
       worksheet.conditional_format('E2:E106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
 
-      # SRSI
-      worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
-      worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})      
+      # RSI
+      worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': 3, 'format': green})      
+      worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': 2, 'format': dark_green})      
+      worksheet.conditional_format('F2:F106', {'type': 'cell', 'criteria': '=', 'value': 1, 'format': blue})      
 
       # TEMA
       worksheet.conditional_format('G2:G106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
 
-      # DI
-      worksheet.conditional_format('H2:H106', {'type': 'cell', 'criteria': '=', 'value': True, 'format': green})
-      worksheet.conditional_format('H2:H106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
-
-      # BES
-      worksheet.conditional_format('I2:I106', {'type': 'cell', 'criteria': '=', 'value': False, 'format': red})
 
       writer.close()    
 

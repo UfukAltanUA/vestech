@@ -1,27 +1,10 @@
 from warnings import filterwarnings
 filterwarnings('ignore')
 import pandas as pd
-from ta.momentum import StochRSIIndicator
+from ta.momentum import StochRSIIndicator, RSIIndicator
 from ta.volatility import BollingerBands
 from ta.trend import ADXIndicator
 import numpy as np
-
-def heikin_ashi(df):
-    heikin_ashi_df = pd.DataFrame(index=df.index.values, columns=['open', 'high', 'low', 'close'])
-    
-    heikin_ashi_df['close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
-    
-    for i in range(len(df)):
-        if i == 0:
-            heikin_ashi_df.iat[0, 0] = df['open'].iloc[0]
-        else:
-            heikin_ashi_df.iat[i, 0] = (heikin_ashi_df.iat[i-1, 0] + heikin_ashi_df.iat[i-1, 3]) / 2
-        
-    #heikin_ashi_df['high'] = heikin_ashi_df.loc[:, ['open', 'close']].join(df['high']).max(axis=1)
-    
-    #heikin_ashi_df['low'] = heikin_ashi_df.loc[:, ['open', 'close']].join(df['low']).min(axis=1)
-    
-    return heikin_ashi_df
 
 def stochastic_rsi(price):
     
@@ -33,7 +16,7 @@ def stochastic_rsi(price):
 
 def stockhastic_rsi_signal(stock):
     signal = []
-    for i in range(0, len(stock)):
+    for i in range(0, len(stock['close'])):
         if stock['%K'][i] > stock['%D'][i] and stock['%K'][i] < .2:
             signal.append(True)
         elif stock['%K'][i] < stock['%D'][i] and stock['%D'][i] > .8:
@@ -41,6 +24,33 @@ def stockhastic_rsi_signal(stock):
         else:
             signal.append('Unknown')
     
+    return signal
+
+def relative_strength_index(price):
+
+    rsi_indicator = RSIIndicator(price)
+    rsi_values = rsi_indicator.rsi()
+
+    return rsi_values
+
+def relative_strength_index_signal(stock):
+
+    signal = []
+
+    for i, v in enumerate(range(0, len(stock['close']))):
+
+        if stock['RSIValues'][i] < 35 and (stock['open'][i] / stock['close'][i]) < 1.02:
+            signal.append(3)
+
+        elif stock['RSIValues'][i] < 35:
+            signal.append(2)
+
+        elif stock['RSIValues'][i-1] * 1.03 <= stock['RSIValues'][i] and stock['RSIValues'][i-1] * 1.03 <= stock['RSIValues'][i-2]:
+            signal.append(1)
+
+        else:
+            signal.append("Unknown")
+
     return signal
 
 def bollinger_band_low(stock):
@@ -81,49 +91,3 @@ def tema_signal(stock, spans = [13, 21]):
     
     return signal
     
-def bearish_engulfing(stock):
-    
-    signal = []
-
-    for i in range(0, len(stock)):
-
-        if stock['close'][i] * 1.03 <= stock['open'][i]:
-            signal.append(False) 
-        else:
-            signal.append('Unknown')
-         
-    return signal
-    
-def average_directional_index(dataset):
-
-    high = pd.Series(np.reshape(dataset['high'].values, (dataset.shape[0],)))
-    low = pd.Series(np.reshape(dataset['low'].values, (dataset.shape[0],)))
-    close = pd.Series(np.reshape(dataset['close'].values, (dataset.shape[0],)))
-
-    adxI = ADXIndicator(high, low, close, 14, True)
-    pos = adxI.adx_pos()
-    neg = adxI.adx_neg()
-    #adx = adxI.adx()
-
-    dataset['-DI'] = list(neg)
-    dataset['+DI'] = list(pos)
-    #dataset['ADX'] = list(adx)
-
-def di_signal(stock, threshold = 2.6):
-
-    signal = []
-
-    for i in range(0, len(stock)):
-
-        if stock['-DI'][i] > stock['+DI'][i] and (stock['-DI'][i] / stock['+DI'][i]) > threshold:
-            
-            signal.append(True) 
-            
-        elif stock['+DI'][i] > stock['-DI'][i] and (stock['+DI'][i] / stock['-DI'][i]) > threshold:
-
-            signal.append(False) 
-
-        else:
-            signal.append('Unknown')
-
-    stock['ADXSignal'] = signal
