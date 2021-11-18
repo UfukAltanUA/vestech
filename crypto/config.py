@@ -1,6 +1,8 @@
 import sys
 from decrypt import decrypt
 
+tickers = ['ONEUSDT', 'FTMUSDT', 'DOGEUSDT'] #'BNBUSDT'
+
 key = sys.argv[1]
 
 ufuk_api_key = decrypt(key, b'gAAAAABhjVLPGJsslJBrGUIYfabg0Ke2dH5DugXTr166EgDDCGVpHrXjHx9oaYzS2IZCPHNEsK0Ek35jXLwGkrRFeotgIreDI6YnwxVzxgpEBsU2O3pmTiWe3-w_sg4Jplq_ZAzY_Lnwd6CsgWW1xcUsZ75d4_m2ACfykxSeCHZjy2i1zj0WC0s=')
@@ -11,10 +13,8 @@ baris_secret_key = decrypt(key, b'gAAAAABhjVPsLmT_1pn97q8ebiXMrZUT6IibRbqLp5po9P
 
 email_password = decrypt(key, b'gAAAAABhjVWfd65GHZ038GKhe2jkneC2HfwZ5XQJcTgoZb1XU5tBDPACCacPhmQwy-KwrMLU82jFuKcmoJdfeDVhZkVXDg6lDm_BEPIYKi9az2Dvtn7zEow=')
 
-tickers = ['ADAUSDT', 'FTMUSDT', 'DOGEUSDT']
-
-db_username = 'bill1oners'
-db_password = 'milli0ners'
+db_username = decrypt(key, b'gAAAAABhkXDftvQPjYKbDnQ3KKJo5lZi3_x3kdZTzT1FKZqdKMYV-wfWh35BSUXMTEOAqyvnVxNGxDVPvhTQFG3QkGER3uOQoA==')
+db_password = decrypt(key, b'gAAAAABhkXEZlkdyFo85stuooDFtYLFAPXSVQ9WEGJTyWlOJeTPC_9kLKxaYmznDNIWqLP0_5hs2C5wVI9s8QszxltsusS0NNQ==')
 
 database = 'ORCLCDB.localdomain'
 url = 'localhost'

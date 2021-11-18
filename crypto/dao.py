@@ -12,26 +12,23 @@ class Database():
 	def __init__(self):
 		self.engine = create_engine(engine_path)
 
-    def get_balance(self):
+    def get_balance(self, ticker):
 
-	    data = read_sql_query('SELECT * FROM UFUK.BARIS', self.engine)
-        return data
+	    sql_data = read_sql_query('SELECT * FROM UFUK.BARIS', self.engine)
+	    balance_on_db = sql_data[ticker.lower()].iloc[-1]
 
-    def post_balance(self, row, ):
+        return balance_on_db
+
+    def post_balance(self, quantity, ticker):
         
-        data = read_sql_query('SELECT * FROM UFUK.BARIS', self.engine)
+		price = self.client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1MINUTE, "1 minute ago UTC")
+		new_balance = price * quantity
+        
+        sql_data = read_sql_query('SELECT * FROM UFUK.BARIS', self.engine) ???????????
+		last_balance = dict(sql_data.iloc[-1])
+		last_balance[ticker.lower()] = new_balance
+		sql_data = sql_data.append(last_balance, ignore_index = True)
+		sql_data.to_sql('UFUK.BARIS', self.engine.connect(), if_exists='replace') ????????
 
-
-
-
-price = self.client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1MINUTE, "1 minute ago UTC")
-new_balance = price * quantity
-
-data.columns
-
-result = {ticker: new_balance, 'Price': 10.0}
-		
-
-df2 = df.append(dictionary, ignore_index = True)
 
 

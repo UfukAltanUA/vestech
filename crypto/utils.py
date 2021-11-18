@@ -8,29 +8,29 @@ import smtplib
 from email.message import EmailMessage
 
 from config import email_password, db_username, db_password
-#from dao import Database
+
 class Request():
-#class Request(Database):
 
     def __init__(self, api_key, secret_key, tickers):
 
         self.tickers = tickers
         self.client = Client(api_key, secret_key) #tld = 'us'
 
-    def request_balance(self):
+    def request_order_info(self, ticker):
 
-        # GET BALANCE FROM DATABASE
-        #Add required information
-        #Required conditions
-        account = self.client.get_account()
-        return account
+        orders = self.client.get_all_orders(symbol=ticker, limit=1)    
+        orders = orders[-1] # Extract the last buy order
+        
+        ticker_balance = float(orders['cummulativeQuoteQty'])
+
+        return ticker_balance
 
     def request_crypto_data(self):
 
         df_list = []
         
         for ticker in self.tickers:
-            start = (datetime.today() - timedelta(days = 4)).strftime("%d %b, %Y")
+            start = (datetime.today() - timedelta(days = 6)).strftime("%d %b, %Y")
             end = datetime.today().strftime("%d %b, %Y")
 
             data = self.client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1HOUR, start, end)
@@ -44,13 +44,12 @@ class Request():
 
         if order_type == 'BUY':
 
-            # GET BALANCE FROM DATABASE
-            #balance_on_db = self.request_balance(ticker)
-            balance_on_db = 20
+            ticker_balance = self.request_order_info(ticker)
 
             price = self.client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1MINUTE, "1 minute ago UTC")
             price = float(price[0][4])
-            quantity = int(balance_on_db / price)
+
+            quantity = int(ticker_balance / price)
 
             order = self.client.create_order(symbol = ticker, side = SIDE_BUY, type = ORDER_TYPE_MARKET, quantity = quantity)
 
@@ -115,7 +114,7 @@ class Analyze():
 
 class Notification():
 
-    def send_email(self, document, to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Crypto'):
+    def send_email(document, to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Crypto'):
         email = EmailMessage()
         email['from'] = 'Ufuk Altan'
         email['to'] = to

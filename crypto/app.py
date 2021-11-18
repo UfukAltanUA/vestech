@@ -1,8 +1,11 @@
 import time
 s = time.time()
+from datetime import datetime
 
 from service import Trade
 from config import *
+
+print(datetime.today())
 
 ufuk = Trade(ufuk_api_key, ufuk_secret_key, tickers)
 ufuk.order()
@@ -18,10 +21,15 @@ print(e-s)
 """
 from service import Trade
 from config import *
+
+from datetime import datetime
+
 import schedule
 import time
 
 def application():
+
+	print(datetime.today())
 
 	ufuk = Trade(ufuk_api_key, ufuk_secret_key, tickers)
 	ufuk.order()
@@ -36,42 +44,3 @@ while True:
     time.sleep(1)
 
 """
-
-
-
-# Decision					+
-# Sell - Buy				+
-# Inheritance				+
-# DB 						
-# Dashboard
-
-
-# BINANCE
-
-# Money on Binance 			+
-# Buy DOGE, ETH 			+
-
-# Get account info			+
-# Order with python 		+
-
-# PYTHON
-
-# Inheritance - super()		+
-# Test buy-sell orders		+
-# Exception handling 		+
-# decrypt function	
-# Email functionality		+
-
-#Oracle
-
-# Read Data
-# Post Data
-# Balance / Price
-# 
-
-
-
-
-
-
-
