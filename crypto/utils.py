@@ -30,8 +30,8 @@ class Request():
         df_list = []
         
         for ticker in self.tickers:
-            start = (datetime.today() - timedelta(days = 6)).strftime("%d %b, %Y")
-            end = datetime.today().strftime("%d %b, %Y")
+            start = (datetime.today() - timedelta(days = 6)).strftime("%d %b, %Y %H:%M:%S" )
+            end = datetime.today().strftime("%d %b, %Y %H:%M:%S" )
 
             data = self.client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1HOUR, start, end)
             values = [[datetime.fromtimestamp(d[0] / 1000), float(d[4])] for d in data] # Date, Close
