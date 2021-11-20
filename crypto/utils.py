@@ -7,19 +7,17 @@ from datetime import datetime, timedelta
 import smtplib
 from email.message import EmailMessage
 
-from config import email_password, db_username, db_password
-
 class Request():
 
     def __init__(self, api_key, secret_key, tickers):
 
         self.tickers = tickers
-        self.client = Client(api_key, secret_key) #tld = 'us'
+        self.client = Client(api_key, secret_key) 
 
     def request_order_info(self, ticker):
 
         orders = self.client.get_all_orders(symbol=ticker, limit=1)    
-        orders = orders[-1] # Extract the last buy order
+        orders = orders[0] 
         
         ticker_balance = float(orders['cummulativeQuoteQty'])
 
@@ -104,7 +102,7 @@ class Analyze():
             df = values[0]
             ticker = values[1]
             
-            self.tema(df)
+            self.tema(df, span = 13)
             self.tema(df, span = 21)
             df['TEMASignal'] = self.tema_signal(df)
             signal = df['TEMASignal'].iloc[-1]
@@ -114,7 +112,7 @@ class Analyze():
 
 class Notification():
 
-    def send_email(document, to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Crypto'):
+    def send_email(document, to = 'ufukaltan08@gmail.com', host='smtp.gmail.com', subject = 'Problem With Crypto Bot'):
         email = EmailMessage()
         email['from'] = 'Ufuk Altan'
         email['to'] = to

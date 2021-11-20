@@ -1,6 +1,6 @@
 from utils import Analyze, Request, Notification
 
-from config import key
+from config import key, param
 
 class Trade(Analyze, Request, Notification):
     
@@ -34,7 +34,7 @@ class Trade(Analyze, Request, Notification):
             self.send_email(document = f'Could Not BUY the {ticker}')
             
             #from subprocess import call
-            #call(["python", "app.py", key])
+            #call(["python", "app.py", key, param])
             
         elif signal == False:
 
@@ -47,7 +47,7 @@ class Trade(Analyze, Request, Notification):
             self.send_email(document = f'Could Not SELL the {ticker}')
 
             #from subprocess import call
-            #call(["python", "app.py", key])
+            #call(["python", "app.py", key, param])
           
         else:
           print(f"No order for {ticker}")
